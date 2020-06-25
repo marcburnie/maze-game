@@ -13,15 +13,18 @@ const {
   Events,
   MouseConstraint,
   Mouse,
+  Composite,
+  Common,
 } = Matter;
 
 //canvas size
 const width = window.innerWidth;
 const height = window.innerHeight;
+const scale = width / height;
 
 //maze size
 const gridRows = 10;
-const gridColumns = 10;
+const gridColumns = Math.floor(gridRows * scale);
 
 const uH = height / gridRows;
 const uW = width / gridColumns;
@@ -94,7 +97,6 @@ const startColumn = Math.floor(Math.random() * gridColumns);
 
 //maze path generation
 const traverse = (row, column) => {
-  console.log(row, column);
   //check if visited the cell then return
   if (grid[row][column] === true) {
     return;
@@ -255,4 +257,32 @@ const win = function () {
   world.bodies.forEach((body) => {
     if (body.label === "wall") Body.setStatic(body, false);
   });
+
+  //shakescene after every 5 seconds
+  Events.on(engine, "beforeUpdate", function (e) {
+    var engine = e.source;
+
+    // apply random forces every 5 secs
+    if (e.timestamp % 5000 < 50) {
+      shakeScene(engine);
+    }
+  });
+};
+const shakeScene = function (engine) {
+  const bodies = Composite.allBodies(engine.world);
+
+  for (let i = 0; i < bodies.length; i++) {
+    let body = bodies[i];
+
+    if (!body.isStatic && body.position.y >= 500) {
+      let forceMagnitude = 0.02 * body.mass;
+
+      Body.applyForce(body, body.position, {
+        x:
+          (forceMagnitude + Common.random() * forceMagnitude) *
+          Common.choose([1, -1]),
+        y: -forceMagnitude + Common.random() * -forceMagnitude,
+      });
+    }
+  }
 };
